@@ -8,6 +8,7 @@ var wrapperHeight = document.getElementsByTagName("main")[0].clientHeight;
 
 
 var timetableDebug = {} // debug
+
 function parseFile() {
     var file = this.files[0];
     if (file) {
@@ -16,10 +17,8 @@ function parseFile() {
         reader.onload = function (evt) {
             let timetable = plist.parse(evt.target.result);
             timetableDebug = timetable;
+            document.getElementById("data").innerHTML = JSON.stringify(timetable);
             drawTimetable(timetable);
-        }
-        reader.onerror = function (evt) {
-            console.log("error reading file");
         }
     }
 }
@@ -30,7 +29,6 @@ function toggleWeekView() {
         canva.style.display = "none";
     }
     let canvas = document.getElementById(`week-${this.value}`);
-    console.log(this.value)
     canvas.style.display = "unset";
 }
 
@@ -48,13 +46,13 @@ function drawWeekSlider(numberOfWeeks) {
     datalist.setAttribute("id", "tickmarks");
     datalist.style.display = "flex";
     datalist.style.justifyContent = "space-between"
-    navigationHTML.appendChild(slider);
-    navigationHTML.appendChild(datalist);
+    timetableHTML.prepend(slider);
+    timetableHTML.prepend(datalist);
     for (let i = 0; i < numberOfWeeks; i++) {
         let week = document.createElement("option");
         week.setAttribute("value", i);
         week.setAttribute("label", `Week ${i+1}`)
-        datalist.appendChild(week);
+        datalist.append(week);
 
         let canvas = document.createElement("canvas");
         canvas.setAttribute("width", wrapperWidth);
@@ -63,7 +61,7 @@ function drawWeekSlider(numberOfWeeks) {
         if (i != 0) {
             canvas.style.display = "none";
         }
-        timetableHTML.appendChild(canvas);
+        timetableHTML.append(canvas);
     }
 }
 
@@ -73,7 +71,7 @@ function drawDays(colors, events) {
     }).time;
 
     let blockWidth = wrapperWidth / 7 - 10;
-    let margin = 20;
+    let margin = 16;
 
     for (period of events) {
         var canvas = document.getElementById(`week-${period.weekNum}`);
@@ -107,8 +105,19 @@ function drawDays(colors, events) {
             ctx.font = '12px Segoe UI'
             ctx.fillStyle = "rgb(255, 255, 255)";
             ctx.fillText(period.title, x + margin, y + 2 * margin);
+            let startHour = Math.floor(period.time / (60 * 60));
+            let startMinutes = Math.floor(period.time % (60 * 60) / 60);
+            if (startMinutes == 0) {
+                startMinutes = "00";
+            }
+            let endHour = Math.floor(period.endTime / (60 * 60));
+            let endMinutes = Math.floor(period.endTime % (60 * 60) / 60);
+            if (endMinutes == 0) {
+                endMinutes = "00";
+            }
+            ctx.fillText(`${startHour}:${startMinutes} - ${endHour}:${endMinutes}`, x + margin, y + 3 * margin);
             if (period.info) {
-                ctx.fillText(period.info, x + margin, y + 3 * margin);
+                ctx.fillText(period.info, x + margin, y + 4 * margin);
             }
         }
     }
@@ -122,3 +131,8 @@ function drawTimetable(timetable) {
 }
 
 document.getElementById("uploadInput").addEventListener("change", parseFile, false);
+document.getElementById("data").addEventListener("input", function () {
+    let timetable = plist.parse(plist.build(JSON.parse(this.innerHTML)));
+    Array.from(timetableHTML.childNodes).map(el => el.remove());
+    drawTimetable(timetable);
+}, false);
