@@ -3,7 +3,7 @@ window.onload = () => {}
 var timetableHTML = document.getElementById("timetable");
 var navigationHTML = document.getElementById("navigation");
 
-var wrapperWidth = document.getElementsByTagName("main")[0].clientWidth;
+var wrapperWidth = document.getElementsByTagName("main")[0].clientWidth - 100;
 var wrapperHeight = document.getElementsByTagName("main")[0].clientHeight;
 
 
@@ -17,7 +17,7 @@ function parseFile() {
         reader.onload = function (evt) {
             let timetable = plist.parse(evt.target.result);
             timetableDebug = timetable;
-            document.getElementById("data").innerHTML = JSON.stringify(timetable);
+            document.getElementById("data").innerHTML = JSON.stringify(timetable, null, '  ');
             drawTimetable(timetable);
         }
     }
@@ -73,6 +73,19 @@ function drawDays(colors, events) {
     let blockWidth = wrapperWidth / 7 - 10;
     let margin = 16;
 
+    var allCanvas = document.getElementsByTagName("canvas");
+    for (i = 0; i < 7; i++) {
+        for (canva of [...allCanvas]) {
+            if (canva.getContext) {
+                let ctx = canva.getContext('2d');
+                ctx.font = '12px Segoe UI'
+                ctx.fillText([
+                    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+                ][i], i * blockWidth + margin, 12);
+            }
+        }
+    }
+
     for (period of events) {
         var canvas = document.getElementById(`week-${period.weekNum}`);
         if (canvas.getContext) {
@@ -83,7 +96,7 @@ function drawDays(colors, events) {
 
             [x, y, w, h] = [
                 period.dayNum * blockWidth + 5,
-                Math.ceil((period.time - earliestEvent) / 60) + 5,
+                Math.ceil((period.time - earliestEvent) / 60) + 2 * margin,
                 blockWidth - 15,
                 Math.ceil((period.endTime - period.time) / 60)
             ]
@@ -125,10 +138,28 @@ function drawDays(colors, events) {
 }
 
 function drawTimetable(timetable) {
-    console.log(timetable)
     drawWeekSlider(timetable.Settings.NumberOfWeeks);
     drawDays(timetable.Settings.ColorSettings, timetable.WeekEvents);
 }
+
+async function saveToFile() {
+    let timetable = plist.parse(plist.build(JSON.parse(document.getElementById("data").innerHTML)));
+    let link = document.createElement('a');
+    link.download = 'timetable.timetable';
+    let blob = new Blob([timetable], {
+        type: 'text/plain'
+    });
+    link.href = window.URL.createObjectURL(blob);
+    link.click();
+}
+
+function createNew() {
+    let timetable = plist.parse(plist.build(emptyTimetable));
+    Array.from(timetableHTML.childNodes).map(el => el.remove());
+    document.getElementById("data").innerHTML = JSON.stringify(timetable, null, '  ');
+    drawTimetable(timetable);
+}
+
 
 document.getElementById("uploadInput").addEventListener("change", parseFile, false);
 document.getElementById("data").addEventListener("input", function () {

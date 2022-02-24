@@ -16,10 +16,14 @@
         </div>
     </main>
     <aside>
-        <div id="data" contenteditable="true"></div>
+        <div style="display: flex; margin: 20px; justify-content: center;">
+            <button onClick="createNew()">Create new</button>
+            <button onClick="saveToFile()">Save to file</button>
+        </div>
+        <pre id="data" contenteditable="true"></pre>
     </aside>
 </body>
 <script src="plist.js"></script>
+<script src="emptyTimetable.js"></script>
 <script src="main.js"></script>
-
 </html>
