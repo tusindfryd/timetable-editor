@@ -143,9 +143,10 @@ function drawTimetable(timetable) {
 }
 
 async function saveToFile() {
-    let timetable = plist.parse(plist.build(JSON.parse(document.getElementById("data").innerHTML)));
+    // let timetable = plist.parse(plist.build(JSON.parse(document.getElementById("data").innerHTML)));
+    let timetable = document.getElementById("data").innerHTML;
     let link = document.createElement('a');
-    link.download = 'timetable.timetable';
+    link.download = 'timetable.json';
     let blob = new Blob([timetable], {
         type: 'text/plain'
     });
